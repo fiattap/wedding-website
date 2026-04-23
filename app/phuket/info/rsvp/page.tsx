@@ -14,6 +14,8 @@ type GuestLookup = {
   invitedToCeremony: string;
   invitedToReception: string;
   plusOneAllowed: string;
+
+  rowIndex: number; // ✅ ADD THIS
 };
 
 type PersonAttendanceBlockProps = {
@@ -359,7 +361,7 @@ await fetch("/api/rsvp/submit", {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    rowIndex: guest.rowIndex, // IMPORTANT
+    rowIndex: guest?.rowIndex, // IMPORTANT
     primaryDinnerAttendance,
     secondaryDinnerAttendance,
     primaryMorningAttendance,

@@ -46,7 +46,9 @@ function FadeSection({
 export default function SchedulePage() {
   return (
     <>
+     <div className="absolute top-0 left-0 w-full z-20">
       <HeaderIdentity />
+    </div>
       <BackNav variant="light" />
       <main className="bg-[#f6f3ef] text-[#4f4842]">
         

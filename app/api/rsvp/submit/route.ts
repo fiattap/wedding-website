@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       plusOneDietaryRestrictions,
     } = body;
 
-    if (!rowIndex) {
+if (typeof rowIndex !== "number") {
       return NextResponse.json(
         { ok: false, error: "Missing rowIndex" },
         { status: 400 }

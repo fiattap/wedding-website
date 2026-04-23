@@ -67,7 +67,9 @@ export default function InfoPage() {
 
   return (
     <>
-      <HeaderIdentity />
+ <div className="absolute top-0 left-0 w-full z-20">
+  <HeaderIdentity />
+</div>
 
       <main className="bg-[#f6f3ef] text-[#4f4842]">
         {/* HERO */}
