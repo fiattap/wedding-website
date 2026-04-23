@@ -1,5 +1,5 @@
-import PhuketHome from "./phuket/page";
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return <PhuketHome />;
+  redirect("/phuket");
 }
