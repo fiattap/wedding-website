@@ -1,7 +1,6 @@
 import React from "react";
 
 // Change label here if you want "F & D" or "FIAT & DEREK"
-const LABEL = "F & D";
 
 export default function HeaderIdentity() {
   return (
@@ -10,7 +9,7 @@ export default function HeaderIdentity() {
       style={{ letterSpacing: "0.25em" }}
       aria-label="Site identity"
     >
-      {LABEL}
+      
     </div>
   );
 }

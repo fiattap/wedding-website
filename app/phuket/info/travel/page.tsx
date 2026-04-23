@@ -48,7 +48,9 @@ function FadeSection({
 export default function TravelPage() {
   return (
     <>
-      <HeaderIdentity />
+      <div className="absolute top-0 left-0 w-full z-20">
+           <HeaderIdentity />
+         </div>
       <BackNav variant="light" />
       <main className="bg-[#f6f3ef] text-[#4f4842]">
         <section className="relative flex min-h-screen items-center justify-center overflow-hidden text-white">
