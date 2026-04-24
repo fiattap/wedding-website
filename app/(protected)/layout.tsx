@@ -6,7 +6,9 @@ export default async function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const hasAccess = cookies().get("site-access")?.value === "true";
+  const cookieStore = await cookies(); // ✅ FIX
+
+  const hasAccess = cookieStore.get("site-access")?.value === "true";
 
   if (!hasAccess) {
     redirect("/");
