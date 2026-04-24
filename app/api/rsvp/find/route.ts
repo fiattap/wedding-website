@@ -3,12 +3,15 @@ import { getGuestRows } from "@/lib/googleSheets";
 
 // 🔥 normalize (lowercase + remove spaces + trim)
 function normalize(value: string) {
-  return value.toLowerCase().replace(/\s+/g, "").trim();
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .trim();
 }
 
 // 🔥 split party names safely
 function splitNames(value: string) {
-  return value
+  return String(value || "")
     .toLowerCase()
     .replace(/and/g, "&")
     .split("&")
@@ -21,11 +24,22 @@ let cachedRows: string[][] | null = null;
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    // 🧪 SAFE JSON PARSE
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { ok: false, error: "Invalid JSON body." },
+        { status: 400 }
+      );
+    }
 
-    // ✅ accept BOTH formats (important fix)
+    // ✅ accept BOTH formats
     const rawName = body?.query || body?.fullName || "";
     const fullName = normalize(rawName);
+
+    console.log("🔍 Incoming name:", rawName, "→", fullName);
 
     // ✅ VALIDATION
     if (!fullName) {
@@ -35,11 +49,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // ⚡ LOAD + CACHE
+    // ⚡ LOAD + CACHE (with debug)
     if (!cachedRows) {
+      console.log("📡 Fetching guest list...");
+
       const rows = await getGuestRows();
 
+      console.log("📦 Rows received:", rows?.length);
+
       if (!rows || rows.length < 2) {
+        console.error("❌ EMPTY SHEET:", rows);
         return NextResponse.json(
           { ok: false, error: "Guest list is empty." },
           { status: 500 }
@@ -47,12 +66,13 @@ export async function POST(req: Request) {
       }
 
       cachedRows = rows;
-      console.log("📦 Guest list cached");
     }
 
-    const rows = cachedRows;
+    const rows = cachedRows!;
     const headers = rows[0].map((h) => String(h || "").trim());
     const dataRows = rows.slice(1);
+
+    console.log("🧾 Headers:", headers);
 
     // 🔍 helper
     const getIndex = (name: string) =>
@@ -67,7 +87,12 @@ export async function POST(req: Request) {
 
     // 🚨 REQUIRED columns
     if (primaryIdx === -1 || secondaryIdx === -1 || partyIdx === -1) {
-      console.error("❌ Missing required columns", { headers });
+      console.error("❌ Missing required columns", {
+        headers,
+        primaryIdx,
+        secondaryIdx,
+        partyIdx,
+      });
 
       return NextResponse.json(
         { ok: false, error: "Sheet is misconfigured." },
@@ -83,8 +108,8 @@ export async function POST(req: Request) {
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i] || [];
 
-      const primary = normalize(String(row[primaryIdx] || ""));
-      const secondary = normalize(String(row[secondaryIdx] || ""));
+      const primary = normalize(row[primaryIdx]);
+      const secondary = normalize(row[secondaryIdx]);
       const partyRaw = String(row[partyIdx] || "");
       const partyNames = splitNames(partyRaw);
 
@@ -97,9 +122,9 @@ export async function POST(req: Request) {
         matchedRowIndex = i + 2;
 
         if (primary === fullName) {
-          matchedName = row[primaryIdx] || "";
+          matchedName = row[primaryIdx];
         } else if (secondary === fullName) {
-          matchedName = row[secondaryIdx] || "";
+          matchedName = row[secondaryIdx];
         } else {
           matchedName = partyRaw;
         }
@@ -111,6 +136,8 @@ export async function POST(req: Request) {
 
     // ❌ NOT FOUND
     if (!matchedRow) {
+      console.log("❌ No match for:", fullName);
+
       return NextResponse.json(
         { ok: false, error: "Invitation not found." },
         { status: 404 }
@@ -121,7 +148,7 @@ export async function POST(req: Request) {
     const response = NextResponse.json({
       ok: true,
       guest: {
-        matchedName: String(matchedName).trim(),
+        matchedName: String(matchedName || "").trim(),
         partyName: String(matchedRow[partyIdx] || "").trim(),
         primaryName: String(matchedRow[primaryIdx] || "").trim(),
         secondaryName: String(matchedRow[secondaryIdx] || "").trim(),
@@ -157,12 +184,13 @@ export async function POST(req: Request) {
     return response;
 
   } catch (error: any) {
-    console.error("❌ API ERROR:", error?.message || error);
+    // 🔥 FULL ERROR LOGGING (CRITICAL)
+    console.error("❌ API ERROR FULL:", error);
 
     return NextResponse.json(
       {
         ok: false,
-        error: "Server error.",
+        error: error?.message || "Server error.",
       },
       { status: 500 }
     );
