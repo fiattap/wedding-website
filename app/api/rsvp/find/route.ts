@@ -1,7 +1,8 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { getGuestRows } from "@/lib/googleSheets";
 
-// 🔥 normalize (lowercase + remove spaces + trim)
 function normalize(value: string) {
   return String(value || "")
     .toLowerCase()
@@ -9,7 +10,6 @@ function normalize(value: string) {
     .trim();
 }
 
-// 🔥 split party names safely
 function splitNames(value: string) {
   return String(value || "")
     .toLowerCase()
@@ -19,12 +19,10 @@ function splitNames(value: string) {
     .filter(Boolean);
 }
 
-// ⚡ in-memory cache (per server instance)
 let cachedRows: string[][] | null = null;
 
 export async function POST(req: Request) {
   try {
-    // 🧪 SAFE JSON PARSE
     let body: any = {};
     try {
       body = await req.json();
@@ -35,13 +33,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ accept BOTH formats
     const rawName = body?.query || body?.fullName || "";
     const fullName = normalize(rawName);
 
-    console.log("🔍 Incoming name:", rawName, "→", fullName);
-
-    // ✅ VALIDATION
     if (!fullName) {
       return NextResponse.json(
         { ok: false, error: "Name is required." },
@@ -49,16 +43,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // ⚡ LOAD + CACHE (with debug)
     if (!cachedRows) {
-      console.log("📡 Fetching guest list...");
-
       const rows = await getGuestRows();
 
-      console.log("📦 Rows received:", rows?.length);
-
       if (!rows || rows.length < 2) {
-        console.error("❌ EMPTY SHEET:", rows);
         return NextResponse.json(
           { ok: false, error: "Guest list is empty." },
           { status: 500 }
@@ -72,9 +60,6 @@ export async function POST(req: Request) {
     const headers = rows[0].map((h) => String(h || "").trim());
     const dataRows = rows.slice(1);
 
-    console.log("🧾 Headers:", headers);
-
-    // 🔍 helper
     const getIndex = (name: string) =>
       headers.findIndex((h) => normalize(h) === normalize(name));
 
@@ -85,15 +70,7 @@ export async function POST(req: Request) {
     const receptionIdx = getIndex("invited_to_reception");
     const plusOneIdx = getIndex("plus_one_allowed");
 
-    // 🚨 REQUIRED columns
     if (primaryIdx === -1 || secondaryIdx === -1 || partyIdx === -1) {
-      console.error("❌ Missing required columns", {
-        headers,
-        primaryIdx,
-        secondaryIdx,
-        partyIdx,
-      });
-
       return NextResponse.json(
         { ok: false, error: "Sheet is misconfigured." },
         { status: 500 }
@@ -104,7 +81,6 @@ export async function POST(req: Request) {
     let matchedName = "";
     let matchedRowIndex = -1;
 
-    // 🔎 MATCH LOOP
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i] || [];
 
@@ -129,22 +105,17 @@ export async function POST(req: Request) {
           matchedName = partyRaw;
         }
 
-        console.log("✅ MATCH:", matchedName);
         break;
       }
     }
 
-    // ❌ NOT FOUND
     if (!matchedRow) {
-      console.log("❌ No match for:", fullName);
-
       return NextResponse.json(
         { ok: false, error: "Invitation not found." },
         { status: 404 }
       );
     }
 
-    // ✅ BUILD RESPONSE
     const response = NextResponse.json({
       ok: true,
       guest: {
@@ -152,27 +123,22 @@ export async function POST(req: Request) {
         partyName: String(matchedRow[partyIdx] || "").trim(),
         primaryName: String(matchedRow[primaryIdx] || "").trim(),
         secondaryName: String(matchedRow[secondaryIdx] || "").trim(),
-
         invitedToCeremony:
           ceremonyIdx !== -1
             ? String(matchedRow[ceremonyIdx] || "").trim()
             : "",
-
         invitedToReception:
           receptionIdx !== -1
             ? String(matchedRow[receptionIdx] || "").trim()
             : "",
-
         plusOneAllowed:
           plusOneIdx !== -1
             ? String(matchedRow[plusOneIdx] || "").trim()
             : "",
-
         rowIndex: matchedRowIndex,
       },
     });
 
-    // 🔐 AUTH COOKIE
     response.cookies.set("guest-auth", "true", {
       httpOnly: true,
       sameSite: "lax",
@@ -184,14 +150,10 @@ export async function POST(req: Request) {
     return response;
 
   } catch (error: any) {
-    // 🔥 FULL ERROR LOGGING (CRITICAL)
     console.error("❌ API ERROR FULL:", error);
 
     return NextResponse.json(
-      {
-        ok: false,
-        error: error?.message || "Server error.",
-      },
+      { ok: false, error: error?.message || "Server error." },
       { status: 500 }
     );
   }
