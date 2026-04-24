@@ -1,18 +1,30 @@
 import { NextResponse } from "next/server";
 import { getGuestRows } from "@/lib/googleSheets";
 
-// 🔥 normalize (removes spaces + lowercase)
+// 🔥 normalize (lowercase + remove spaces + trim)
 function normalize(value: string) {
   return value.toLowerCase().replace(/\s+/g, "").trim();
 }
 
-// ⚡ simple in-memory cache
+// 🔥 split party names safely
+function splitNames(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/and/g, "&")
+    .split("&")
+    .map((n) => normalize(n))
+    .filter(Boolean);
+}
+
+// ⚡ in-memory cache (per server instance)
 let cachedRows: string[][] | null = null;
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const rawName = body.fullName || "";
+
+    // ✅ accept BOTH formats (important fix)
+    const rawName = body?.query || body?.fullName || "";
     const fullName = normalize(rawName);
 
     // ✅ VALIDATION
@@ -23,7 +35,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ⚡ LOAD + CACHE SHEET
+    // ⚡ LOAD + CACHE
     if (!cachedRows) {
       const rows = await getGuestRows();
 
@@ -35,39 +47,30 @@ export async function POST(req: Request) {
       }
 
       cachedRows = rows;
-      console.log("📦 Guest list loaded & cached");
+      console.log("📦 Guest list cached");
     }
 
-    const rows = cachedRows!;
-    const headers = rows[0].map((h) => String(h).trim());
+    const rows = cachedRows;
+    const headers = rows[0].map((h) => String(h || "").trim());
     const dataRows = rows.slice(1);
 
-    // ✅ ROBUST HEADER MATCHING
+    // 🔍 helper
     const getIndex = (name: string) =>
       headers.findIndex((h) => normalize(h) === normalize(name));
 
-    const primaryNameIndex = getIndex("primary_name");
-    const secondaryNameIndex = getIndex("secondary_name");
-    const partyNameIndex = getIndex("party_name");
-    const invitedToCeremonyIndex = getIndex("invited_to_ceremony");
-    const invitedToReceptionIndex = getIndex("invited_to_reception");
-    const plusOneAllowedIndex = getIndex("plus_one_allowed");
+    const primaryIdx = getIndex("primary_name");
+    const secondaryIdx = getIndex("secondary_name");
+    const partyIdx = getIndex("party_name");
+    const ceremonyIdx = getIndex("invited_to_ceremony");
+    const receptionIdx = getIndex("invited_to_reception");
+    const plusOneIdx = getIndex("plus_one_allowed");
 
-    // 🚨 REQUIRED COLUMNS CHECK
-    if (
-      primaryNameIndex === -1 ||
-      secondaryNameIndex === -1 ||
-      partyNameIndex === -1
-    ) {
-      console.error("❌ Missing columns", {
-        headers,
-        primaryNameIndex,
-        secondaryNameIndex,
-        partyNameIndex,
-      });
+    // 🚨 REQUIRED columns
+    if (primaryIdx === -1 || secondaryIdx === -1 || partyIdx === -1) {
+      console.error("❌ Missing required columns", { headers });
 
       return NextResponse.json(
-        { ok: false, error: "Missing required columns in sheet." },
+        { ok: false, error: "Sheet is misconfigured." },
         { status: 500 }
       );
     }
@@ -76,92 +79,90 @@ export async function POST(req: Request) {
     let matchedName = "";
     let matchedRowIndex = -1;
 
-    // ✅ LOOP
+    // 🔎 MATCH LOOP
     for (let i = 0; i < dataRows.length; i++) {
-      const row = dataRows[i];
+      const row = dataRows[i] || [];
 
-      const primary = normalize(String(row[primaryNameIndex] || ""));
-      const secondary = normalize(String(row[secondaryNameIndex] || ""));
-      const party = normalize(String(row[partyNameIndex] || ""));
-
-      console.log("🔎 Checking:", {
-        input: fullName,
-        primary,
-        secondary,
-        party,
-      });
+      const primary = normalize(String(row[primaryIdx] || ""));
+      const secondary = normalize(String(row[secondaryIdx] || ""));
+      const partyRaw = String(row[partyIdx] || "");
+      const partyNames = splitNames(partyRaw);
 
       if (
         primary === fullName ||
         secondary === fullName ||
-        party.split("&").some(name => normalize(name) === fullName)
+        partyNames.includes(fullName)
       ) {
         matchedRow = row;
         matchedRowIndex = i + 2;
 
-        // ✅ 🔥 FIX: return EXACT matched person
         if (primary === fullName) {
-          matchedName = String(row[primaryNameIndex] || "");
+          matchedName = row[primaryIdx] || "";
         } else if (secondary === fullName) {
-          matchedName = String(row[secondaryNameIndex] || "");
+          matchedName = row[secondaryIdx] || "";
         } else {
-          matchedName = String(row[partyNameIndex] || "");
+          matchedName = partyRaw;
         }
 
-        console.log("✅ MATCH FOUND:", {
-          matchedName,
-          rowIndex: matchedRowIndex,
-        });
-
+        console.log("✅ MATCH:", matchedName);
         break;
       }
     }
 
     // ❌ NOT FOUND
-    if (!matchedRow || matchedRowIndex === -1) {
-      console.warn("❌ No match for:", rawName);
-
+    if (!matchedRow) {
       return NextResponse.json(
         { ok: false, error: "Invitation not found." },
         { status: 404 }
       );
     }
 
-    // ✅ SUCCESS RESPONSE
-    return NextResponse.json({
+    // ✅ BUILD RESPONSE
+    const response = NextResponse.json({
       ok: true,
       guest: {
-        matchedName: matchedName.trim(),
-        partyName: String(matchedRow[partyNameIndex] || "").trim(),
-        primaryName: String(matchedRow[primaryNameIndex] || "").trim(),
-        secondaryName: String(matchedRow[secondaryNameIndex] || "").trim(),
+        matchedName: String(matchedName).trim(),
+        partyName: String(matchedRow[partyIdx] || "").trim(),
+        primaryName: String(matchedRow[primaryIdx] || "").trim(),
+        secondaryName: String(matchedRow[secondaryIdx] || "").trim(),
 
         invitedToCeremony:
-          invitedToCeremonyIndex !== -1
-            ? String(matchedRow[invitedToCeremonyIndex] || "").trim()
+          ceremonyIdx !== -1
+            ? String(matchedRow[ceremonyIdx] || "").trim()
             : "",
 
         invitedToReception:
-          invitedToReceptionIndex !== -1
-            ? String(matchedRow[invitedToReceptionIndex] || "").trim()
+          receptionIdx !== -1
+            ? String(matchedRow[receptionIdx] || "").trim()
             : "",
 
         plusOneAllowed:
-          plusOneAllowedIndex !== -1
-            ? String(matchedRow[plusOneAllowedIndex] || "").trim()
+          plusOneIdx !== -1
+            ? String(matchedRow[plusOneIdx] || "").trim()
             : "",
 
         rowIndex: matchedRowIndex,
       },
     });
+
+    // 🔐 AUTH COOKIE
+    response.cookies.set("guest-auth", "true", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24,
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    return response;
+
   } catch (error: any) {
-    console.error("❌ [api/rsvp/find] error:", error?.message || error);
+    console.error("❌ API ERROR:", error?.message || error);
 
     return NextResponse.json(
       {
         ok: false,
-        error: "Failed to search guest list.",
-        details: error?.message || null,
+        error: "Server error.",
       },
       { status: 500 }
     );

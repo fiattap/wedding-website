@@ -13,12 +13,9 @@ export async function POST(req: Request) {
       secondaryMorningAttendance,
       primaryDietaryRestrictions,
       secondaryDietaryRestrictions,
-      bringingPlusOne,
-      plusOneName,
-      plusOneDietaryRestrictions,
     } = body;
 
-if (typeof rowIndex !== "number") {
+    if (typeof rowIndex !== "number") {
       return NextResponse.json(
         { ok: false, error: "Missing rowIndex" },
         { status: 400 }
@@ -28,80 +25,68 @@ if (typeof rowIndex !== "number") {
     const sheets = await getSheetsClient();
     const spreadsheetId = process.env.GOOGLE_SHEET_ID!;
 
-    // ✅ Ceremony (K)
-    const ceremony_response =
+    // ✅ RSVP STATUS PER PERSON
+    const primary_rsvp_status =
       primaryMorningAttendance === "yes" ||
-      secondaryMorningAttendance === "yes"
-        ? "yes"
-        : "no";
-
-    // ✅ Reception (L)
-    const reception_response =
-      primaryDinnerAttendance === "yes" ||
-      secondaryDinnerAttendance === "yes"
-        ? "yes"
-        : "no";
-
-    // ✅ RSVP Status (J)
-    const rsvp_status =
-      ceremony_response === "yes" || reception_response === "yes"
+      primaryDinnerAttendance === "yes"
         ? "attending"
         : "not_attending";
 
-    // ✅ Dietary YES/NO (M)
-    const hasDietary =
-      primaryDietaryRestrictions ||
-      secondaryDietaryRestrictions ||
-      plusOneDietaryRestrictions;
+    const secondary_rsvp_status =
+      secondaryMorningAttendance === "yes" ||
+      secondaryDinnerAttendance === "yes"
+        ? "attending"
+        : "not_attending";
 
-    const dietary_restrictions = hasDietary ? "yes" : "no";
+    // ✅ DIETARY YES/NO FLAGS
+    const primaryDietaryFlag = primaryDietaryRestrictions?.trim()
+      ? "yes"
+      : "no";
 
-    // ✅ Notes (N)
-    const notes = [
-      primaryDietaryRestrictions && `Primary: ${primaryDietaryRestrictions}`,
-      secondaryDietaryRestrictions && `Secondary: ${secondaryDietaryRestrictions}`,
-      plusOneDietaryRestrictions &&
-        `Guest (${plusOneName || "Guest"}): ${plusOneDietaryRestrictions}`,
-    ]
-      .filter(Boolean)
-      .join(" | ");
+    const secondaryDietaryFlag = secondaryDietaryRestrictions?.trim()
+      ? "yes"
+      : "no";
 
-    // ✅ Plus One (I)
-    const finalPlusOneName =
-      bringingPlusOne === "yes" ? plusOneName || "" : "";
+    // ✅ NOTES (actual text only)
+    const primaryNotes = primaryDietaryRestrictions || "";
+    const secondaryNotes = secondaryDietaryRestrictions || "";
 
     const submitted_at = new Date().toISOString();
 
-    console.log("✍️ Writing to sheet:", {
+    console.log("✅ Writing CLEAN RSVP:", {
       rowIndex,
-      rsvp_status,
-      ceremony_response,
-      reception_response,
-      dietary_restrictions,
-      notes,
+      primary_rsvp_status,
+      secondary_rsvp_status,
+      primaryDietaryFlag,
+      secondaryDietaryFlag,
     });
 
-    // ✅ WRITE (I → O)
+    // ✅ WRITE TO EXACT COLUMNS J → T
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `'Guest List RSVP'!I${rowIndex}:O${rowIndex}`,
+      range: `'Guest List RSVP'!J${rowIndex}:T${rowIndex}`,
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: [
           [
-            finalPlusOneName,      // I
-            rsvp_status,           // J
-            ceremony_response,     // K
-            reception_response,    // L
-            dietary_restrictions,  // M (yes/no)
-            notes,                 // N (actual details)
-            submitted_at,          // O
+            primary_rsvp_status,        // J
+            secondary_rsvp_status,      // K
+            primaryMorningAttendance,  // L
+            secondaryMorningAttendance,// M
+            primaryDinnerAttendance,   // N
+            secondaryDinnerAttendance, // O
+            primaryDietaryFlag,        // P ✅ YES/NO
+            secondaryDietaryFlag,      // Q ✅ YES/NO
+            primaryNotes,              // R ✅ TEXT
+            secondaryNotes,            // S ✅ TEXT
+            submitted_at,              // T
           ],
         ],
       },
     });
 
     return NextResponse.json({ ok: true });
+
   } catch (error: any) {
     console.error("[api/rsvp/submit] error", error);
 

@@ -270,53 +270,41 @@ export default function RSVPPage() {
   ]);
 
   async function handleStart() {
-    if (!canContinue || isLoading) return;
+  if (!canContinue || isLoading) return;
 
-    setError("");
-    setIsLoading(true);
-    setGuest(null);
+  setError("");
+  setIsLoading(true);
+  setGuest(null);
 
-    try {
-      const parts = guestName
-        .trim()
-        .split(" ")
-        .map((part) => part.trim())
-        .filter(Boolean);
+  try {
+    const normalized = guestName.replace(/\s+/g, "").toLowerCase();
 
-      if (parts.length < 2) {
-        setError("Please enter both first and last name.");
-        setHasStarted(false);
-        return;
-      }
+    const res = await fetch("/api/rsvp/find", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: normalized }),
+    });
 
-     const fullName = parts.join(" ");
+    const data = await res.json();
 
-const res = await fetch("/api/rsvp/find", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({ fullName }),
-});
-
-      const data = await res.json();
-
-      if (!res.ok || !data.ok) {
-        setError(data.error || "Invitation not found.");
-        setHasStarted(false);
-        return;
-      }
-
-      setGuest(data.guest);
-      setHasStarted(true);
-    } catch (err) {
-      console.error("[rsvp/page] lookup failed", err);
-      setError("Something went wrong. Please try again.");
+    if (!res.ok || !data.ok) {
+      setError(data.error || "Invitation not found.");
       setHasStarted(false);
-    } finally {
-      setIsLoading(false);
+      return;
     }
+
+    setGuest(data.guest);
+    setHasStarted(true);
+  } catch (err) {
+    console.error("[rsvp/page] lookup failed", err);
+    setError("Something went wrong. Please try again.");
+    setHasStarted(false);
+  } finally {
+    setIsLoading(false);
   }
+}
 
   function resetLookup() {
     setHasStarted(false);
@@ -345,39 +333,62 @@ async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
   if (!canSubmit || !guest) return;
 
   try {
-    // ✅ PRIMARY GUEST
-    const primaryPayload = {
-      guestName, // must match primary_name in sheet
-      ceremony_response: primaryMorningAttendance,
-      reception_response: primaryDinnerAttendance,
-      dietary_restrictions: primaryDietaryRestrictions || "",
-      plus_one_name: bringingPlusOne ? plusOneName : "",
-      notes: "",
+    const payload = {
+      rowIndex: guest.rowIndex,
+
+      // ✅ ATTENDANCE (force clean yes/no)
+      primaryMorningAttendance: primaryMorningAttendance || "no",
+      secondaryMorningAttendance: hasSecondaryGuest
+        ? secondaryMorningAttendance || "no"
+        : "no",
+
+      primaryDinnerAttendance: primaryDinnerAttendance || "no",
+      secondaryDinnerAttendance: hasSecondaryGuest
+        ? secondaryDinnerAttendance || "no"
+        : "no",
+
+      // ✅ DIETARY
+      primaryDietaryRestrictions:
+        primaryHasDietaryRestrictions === "yes"
+          ? primaryDietaryRestrictions
+          : "",
+
+      secondaryDietaryRestrictions:
+        hasSecondaryGuest &&
+        secondaryHasDietaryRestrictions === "yes"
+          ? secondaryDietaryRestrictions
+          : "",
+
+      // ✅ PLUS ONE
+      bringingPlusOne: bringingPlusOne === "yes" ? "yes" : "no",
+      plusOneName: bringingPlusOne === "yes" ? plusOneName : "",
+      plusOneDietaryRestrictions:
+        bringingPlusOne === "yes" &&
+        plusOneHasDietaryRestrictions === "yes"
+          ? plusOneDietaryRestrictions
+          : "",
     };
 
-await fetch("/api/rsvp/submit", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    rowIndex: guest?.rowIndex, // IMPORTANT
-    primaryDinnerAttendance,
-    secondaryDinnerAttendance,
-    primaryMorningAttendance,
-    secondaryMorningAttendance,
-    primaryDietaryRestrictions,
-    secondaryDietaryRestrictions,
-    bringingPlusOne,
-    plusOneName,
-    plusOneDietaryRestrictions,
-  }),
-});
+    console.log("📤 Submitting RSVP:", payload);
+
+    const res = await fetch("/api/rsvp/submit", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.ok) {
+      console.error("❌ Submit failed:", data);
+      return;
+    }
 
     setSubmitted(true);
-
   } catch (err) {
-    console.error("Submit failed", err);
+    console.error("❌ Submit error", err);
   }
 }
   return (
