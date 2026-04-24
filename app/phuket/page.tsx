@@ -44,7 +44,6 @@ export default function PhuketPage() {
 
   const [showMoreDetails, setShowMoreDetails] = useState(false);
 
-  // INTRO TIMING
   useEffect(() => {
     const textTimer = setTimeout(() => setShowIntroText(true), 2800);
     const hideTimer = setTimeout(() => setShowIntro(false), 5800);
@@ -55,7 +54,6 @@ export default function PhuketPage() {
     };
   }, []);
 
-  // PHOTO CROSSFADE (fixed dependency issue)
   useEffect(() => {
     if (showIntro) return;
 
@@ -72,7 +70,6 @@ export default function PhuketPage() {
     return () => clearInterval(interval);
   }, [showIntro]);
 
-  // CTA APPEAR
   useEffect(() => {
     if (showIntro) return;
 
@@ -102,9 +99,16 @@ export default function PhuketPage() {
             <div className="absolute inset-0 bg-black/25" />
           </div>
 
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className={showIntroText ? "intro-reveal" : "opacity-0"}>
-              <h1 className={`${scriptFont.className} text-[54px] md:text-[88px] lg:text-[108px] text-white`}>
+          {/* FIXED CENTERING */}
+          <div className="absolute inset-0 flex items-center justify-center px-6">
+            <div
+              className={`w-full max-w-[90vw] text-center transform -translate-y-6 ${
+                showIntroText ? "intro-reveal" : "opacity-0"
+              }`}
+            >
+              <h1
+                className={`${scriptFont.className} text-[44px] sm:text-[64px] md:text-[88px] lg:text-[110px] leading-tight text-white`}
+              >
                 {INTRO_TEXT}
               </h1>
             </div>
