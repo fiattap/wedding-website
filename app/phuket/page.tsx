@@ -45,8 +45,8 @@ export default function PhuketPage() {
   const [showMoreDetails, setShowMoreDetails] = useState(false);
 
   useEffect(() => {
-    const textTimer = setTimeout(() => setShowIntroText(true), 2800);
-    const hideTimer = setTimeout(() => setShowIntro(false), 5800);
+    const textTimer = setTimeout(() => setShowIntroText(true), 2600);
+    const hideTimer = setTimeout(() => setShowIntro(false), 6500);
 
     return () => {
       clearTimeout(textTimer);
@@ -83,7 +83,7 @@ export default function PhuketPage() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f6f3ef] text-[#4f4842]">
 
-      {/* INTRO OVERLAY */}
+      {/* INTRO */}
       {showIntro && (
         <div className="absolute inset-0 z-20">
 
@@ -94,30 +94,25 @@ export default function PhuketPage() {
               fill
               priority
               sizes="100vw"
-              className="object-cover object-center scale-[1.03]"
+              className="object-cover object-center animate-zoomSlow"
             />
-            <div className="absolute inset-0 bg-black/25" />
+            <div className="absolute inset-0 bg-black/20" />
           </div>
 
-          {/* FIXED CENTERING */}
-          <div className="absolute inset-0 flex items-center justify-center px-6">
-            <div
-              className={`w-full max-w-[90vw] text-center transform -translate-y-6 ${
-                showIntroText ? "intro-reveal" : "opacity-0"
-              }`}
-            >
+          <div className="absolute inset-0 flex items-center justify-center px-4">
+            <div className={`${showIntroText ? "intro-reveal" : "opacity-0"} w-full text-center`}>
               <h1
-                className={`${scriptFont.className} text-[44px] sm:text-[64px] md:text-[88px] lg:text-[110px] leading-tight text-white`}
+                className={`${scriptFont.className} text-white whitespace-nowrap leading-[1.1] text-[clamp(40px,9vw,140px)]`}
+                style={{ textShadow: "0 10px 40px rgba(0,0,0,0.35)" }}
               >
                 {INTRO_TEXT}
               </h1>
             </div>
           </div>
-
         </div>
       )}
 
-      {/* MAIN CONTENT */}
+      {/* MAIN */}
       <div className={`relative transition-opacity duration-700 ${showIntro ? "opacity-0" : "opacity-100"}`}>
         <section className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
 
@@ -129,27 +124,31 @@ export default function PhuketPage() {
             {MAIN_HEADING}
           </h2>
 
-          {/* PHOTO */}
+          {/* PHOTO (NO SHIFT GUARANTEED) */}
           <div className="mt-12">
             <div className="relative w-[220px] md:w-[260px] aspect-[4/5] mx-auto overflow-hidden rounded-[24px] shadow-lg">
 
+              {/* PREVIOUS */}
               <Image
                 src={PHOTOS[prevPhoto]}
                 alt=""
                 fill
                 sizes="(max-width: 768px) 220px, 260px"
-                className="object-cover absolute inset-0"
+                className="object-cover absolute inset-0 will-change-transform translate-z-0"
+                style={{ transform: "translateZ(0)" }}
               />
 
+              {/* CURRENT */}
               <Image
                 src={PHOTOS[currentPhoto]}
                 alt=""
                 fill
                 priority
                 sizes="(max-width: 768px) 220px, 260px"
-                className={`object-cover absolute inset-0 transition-opacity duration-[1800ms] ${
+                className={`object-cover absolute inset-0 transition-opacity duration-[1800ms] will-change-opacity translate-z-0 ${
                   isFading ? "opacity-100" : "opacity-0"
                 }`}
+                style={{ transform: "translateZ(0)" }}
               />
 
             </div>
@@ -159,7 +158,6 @@ export default function PhuketPage() {
             a collection of places we have loved
           </p>
 
-          {/* CTA */}
           <div className={`mt-10 transition-all duration-700 ${showMoreDetails ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             <Link href="/phuket/info">
               <span className="flex flex-col items-center text-[11px] uppercase tracking-[0.3em] text-[#8b8178]">
@@ -172,17 +170,37 @@ export default function PhuketPage() {
         </section>
       </div>
 
-      {/* ANIMATION */}
+      {/* ANIMATIONS */}
       <style jsx global>{`
         .intro-reveal {
           clip-path: inset(0 100% 0 0);
-          animation: revealText 2.4s ease forwards;
+          opacity: 0;
+          animation: revealText 2.2s ease forwards, fadeIn 1s ease forwards;
         }
 
         @keyframes revealText {
           to {
             clip-path: inset(0 0 0 0);
           }
+        }
+
+        @keyframes fadeIn {
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes zoomSlow {
+          from {
+            transform: scale(1.03);
+          }
+          to {
+            transform: scale(1.08);
+          }
+        }
+
+        .animate-zoomSlow {
+          animation: zoomSlow 6.5s ease-out forwards;
         }
       `}</style>
 
