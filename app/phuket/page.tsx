@@ -87,8 +87,8 @@ export default function PhuketPage() {
       {showIntro && (
         <div className="absolute inset-0 z-20">
 
-          {/* BACKGROUND (LOCKED — NO SHIFT) */}
-          <div className="absolute inset-0">
+          {/* BACKGROUND — LOCKED (NO SHIFT EVER) */}
+          <div className="absolute inset-0 overflow-hidden">
             <Image
               src={INTRO_BACKGROUND_PHOTO}
               alt=""
@@ -98,11 +98,11 @@ export default function PhuketPage() {
               className="object-cover object-center animate-zoomSlow"
               style={{
                 transformOrigin: "center center",
-                transform: "scale(1.05)", // 👈 prevents perceived shift
-                willChange: "transform",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                transform: "translateZ(0) scale(1.05)", // 👈 KEY FIX
               }}
             />
-
             <div className="absolute inset-0 bg-black/20" />
           </div>
 
@@ -130,20 +130,20 @@ export default function PhuketPage() {
               </h1>
             </div>
           </div>
-
         </div>
       )}
 
       {/* MAIN */}
       <div className={`relative transition-opacity duration-700 ${showIntro ? "opacity-0" : "opacity-100"}`}>
-        <section className="flex min-h-screen flex-col items-center justify-start pt-12 px-6 text-center">
+        
+        <section className="flex min-h-screen flex-col items-center justify-start pt-10 md:pt-12 px-6 text-center">
           
-          {/* 👇 moved up slightly */}
-          <p className="mb-4 text-[12px] uppercase tracking-[0.45em] text-[#8b8178]">
+          {/* 👇 slightly higher + cleaner */}
+          <p className="mb-6 -mt-2 text-[12px] uppercase tracking-[0.45em] text-[#8b8178]">
             {NAMES}
           </p>
 
-          <h2 className={`${scriptFont.className} text-[34px] md:text-[56px] text-[#6f655d]`}>
+          <h2 className={`${scriptFont.className} text-[34px] md:text-[56px] text-[#6f655d] leading-[1.2]`}>
             {MAIN_HEADING}
           </h2>
 
@@ -212,10 +212,10 @@ export default function PhuketPage() {
 
         @keyframes zoomSlow {
           from {
-            transform: scale(1.05);
+            transform: translateZ(0) scale(1.05);
           }
           to {
-            transform: scale(1.1);
+            transform: translateZ(0) scale(1.1);
           }
         }
 
@@ -223,7 +223,6 @@ export default function PhuketPage() {
           animation: zoomSlow 6.5s ease-out forwards;
         }
       `}</style>
-
     </main>
   );
 }
