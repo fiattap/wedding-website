@@ -87,7 +87,7 @@ export default function PhuketPage() {
       {showIntro && (
         <div className="absolute inset-0 z-20">
 
-          {/* BACKGROUND (FIXED — NO SHIFT) */}
+          {/* BACKGROUND (LOCKED — NO SHIFT) */}
           <div className="absolute inset-0">
             <Image
               src={INTRO_BACKGROUND_PHOTO}
@@ -97,8 +97,9 @@ export default function PhuketPage() {
               sizes="100vw"
               className="object-cover object-center animate-zoomSlow"
               style={{
-                transformOrigin: "center center", // 👈 locks zoom center
-                willChange: "transform",          // 👈 smoother + stable
+                transformOrigin: "center center",
+                transform: "scale(1.05)", // 👈 prevents perceived shift
+                willChange: "transform",
               }}
             />
 
@@ -135,8 +136,10 @@ export default function PhuketPage() {
 
       {/* MAIN */}
       <div className={`relative transition-opacity duration-700 ${showIntro ? "opacity-0" : "opacity-100"}`}>
-       <section className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
-          <p className="mb-6 text-[12px] uppercase tracking-[0.45em] text-[#8b8178]">
+        <section className="flex min-h-screen flex-col items-center justify-start pt-12 px-6 text-center">
+          
+          {/* 👇 moved up slightly */}
+          <p className="mb-4 text-[12px] uppercase tracking-[0.45em] text-[#8b8178]">
             {NAMES}
           </p>
 
@@ -152,7 +155,7 @@ export default function PhuketPage() {
                 src={PHOTOS[prevPhoto]}
                 alt=""
                 fill
-                sizes="(max-width: 768px) 220px, 260px"  // 👈 fixes warning too
+                sizes="(max-width: 768px) 220px, 260px"
                 className="object-cover absolute inset-0"
               />
 
@@ -209,10 +212,10 @@ export default function PhuketPage() {
 
         @keyframes zoomSlow {
           from {
-            transform: scale(1.03);
+            transform: scale(1.05);
           }
           to {
-            transform: scale(1.08);
+            transform: scale(1.1);
           }
         }
 
