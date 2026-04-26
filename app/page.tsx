@@ -26,6 +26,26 @@ export default function Home() {
   const normalize = (str: string) =>
     str.toLowerCase().replace(/\s+/g, "").trim();
 
+  // ✅ helper to extract FIRST NAME cleanly
+  const getFirstName = (raw: string) => {
+    if (!raw) return "";
+
+    // if name has spaces → take first word
+    if (raw.includes(" ")) {
+      return raw.split(" ")[0];
+    }
+
+    // if it's like "cindyarthurs" → try to split camel-style (fallback: first 5–6 chars)
+    const match = raw.match(/^[a-z]+/i);
+    const guess = match ? match[0] : raw;
+
+    // optional: trim overly long strings (prevents "cindyarthurs")
+    return guess.length > 8 ? guess.slice(0, 5) : guess;
+  };
+
+  const formatName = (name: string) =>
+    name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+
   const handleLogin = async () => {
     if (loading) return;
 
@@ -55,6 +75,24 @@ export default function Home() {
         return;
       }
 
+      // ✅ BEST SOURCE OF NAME (from sheet if available)
+      const rawName =
+        data?.matchedName ||
+        data?.primaryName ||
+        data?.name ||
+        data?.fullName ||
+        inputName;
+
+      // ✅ EXTRACT FIRST NAME ONLY
+      const firstName = formatName(getFirstName(rawName));
+
+      // ✅ STORE CLEAN FIRST NAME
+      localStorage.setItem("guestName", firstName);
+
+      // keep full data if needed
+      localStorage.setItem("guest-data", JSON.stringify(data));
+
+      // redirect
       window.location.href = "/phuket";
     } catch (err) {
       console.error(err);
@@ -65,7 +103,6 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f6f3ef] text-[#4f4842] px-4 overflow-hidden">
-
       <div
         className={`w-full max-w-[320px] text-center transform transition-all duration-[1200ms] ${
           mounted
@@ -73,27 +110,18 @@ export default function Home() {
             : "opacity-0 translate-y-8 scale-[0.98]"
         }`}
       >
-
         <div className="translate-y-6">
 
-          {/* TITLE */}
-          <h1
-            className={`${scriptFont.className} text-[52px] text-[#7a7068] leading-none`}
-          >
+          <h1 className={`${scriptFont.className} text-[52px] text-[#7a7068] leading-none`}>
             Welcome
           </h1>
 
-          {/* SUBTEXT */}
-          <p
-            className={`${serifFont.className} mt-5 text-[12px] tracking-[0.22em] text-[#a8a098]`}
-          >
+          <p className={`${serifFont.className} mt-5 text-[12px] tracking-[0.22em] text-[#a8a098]`}>
             enter your name (no spaces needed)
           </p>
 
-          {/* DIVIDER */}
           <div className="mt-6 mx-auto h-[1px] w-[60px] bg-[#e5dfd9]" />
 
-          {/* INPUT */}
           <div className="mt-8">
             <input
               type="text"
@@ -111,43 +139,23 @@ export default function Home() {
             />
           </div>
 
-          {/* BUTTON — refined / understated */}
           <div className="mt-8">
             <button
               onClick={handleLogin}
               disabled={loading}
-              className="
-                w-[150px]
-                border border-[#e2dbd4]
-                text-[#8a8077]
-                py-3
-                text-[11px]
-                uppercase
-                tracking-[0.4em]
-                bg-transparent
-                transition-all duration-500
-                hover:border-[#cfc7c0]
-                hover:text-[#6f655d]
-                hover:bg-white/30
-                active:scale-[0.98]
-                disabled:opacity-50
-              "
+              className="w-[150px] border border-[#e2dbd4] text-[#8a8077] py-3 text-[11px] uppercase tracking-[0.4em] bg-transparent transition-all duration-500 hover:border-[#cfc7c0] hover:text-[#6f655d] hover:bg-white/30 active:scale-[0.98] disabled:opacity-50"
             >
               {loading ? "Checking..." : "Enter"}
             </button>
           </div>
 
-          {/* ERROR */}
           {error && (
             <p className="mt-5 text-[12px] tracking-[0.15em] text-[#b08980]">
               {error}
             </p>
           )}
 
-          {/* FOOTER */}
-          <p
-            className={`${serifFont.className} mt-12 text-[12px] tracking-[0.22em] text-[#b5aca4]`}
-          >
+          <p className={`${serifFont.className} mt-12 text-[12px] tracking-[0.22em] text-[#b5aca4]`}>
             we can’t wait to celebrate with you
           </p>
 

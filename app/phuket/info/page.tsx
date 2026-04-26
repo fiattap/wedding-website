@@ -26,8 +26,21 @@ export default function InfoPage() {
     return () => clearTimeout(t);
   }, []);
 
-  // ✅ NAME FETCH
+  // ✅ IMPROVED NAME FETCH (handles both storage methods)
   useEffect(() => {
+    // 1. Try simple stored name first
+    const simpleName = localStorage.getItem("guestName");
+
+    if (simpleName) {
+      const formatted =
+        simpleName.charAt(0).toUpperCase() +
+        simpleName.slice(1).toLowerCase();
+
+      setGuestName(formatted);
+      return;
+    }
+
+    // 2. Fallback to guest-data object
     const guest = localStorage.getItem("guest-data");
     if (!guest) return;
 
@@ -61,15 +74,15 @@ export default function InfoPage() {
     { label: "Travel", path: "/phuket/info/travel" },
     { label: "Things To Do", path: "/phuket/info/things" },
     { label: "FAQ", path: "/phuket/info/faq" },
-    { label: "Our Story", path: "/phuket/info/story" }, // ✅ NEW
+    { label: "Our Story", path: "/phuket/info/story" },
     { label: "RSVP", path: "/phuket/info/rsvp" },
   ];
 
   return (
     <>
- <div className="absolute top-0 left-0 w-full z-20">
-  <HeaderIdentity />
-</div>
+      <div className="absolute top-0 left-0 w-full z-20">
+        <HeaderIdentity />
+      </div>
 
       <main className="bg-[#f6f3ef] text-[#4f4842]">
         {/* HERO */}
@@ -148,7 +161,7 @@ export default function InfoPage() {
                 <p
                   className={`${scriptFont.className} mb-4 text-[28px] text-[#6f655d]`}
                 >
-                  Hi {guestName},
+                  Hi {guestName}
                 </p>
               )}
 
