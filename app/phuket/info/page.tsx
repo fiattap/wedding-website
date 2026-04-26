@@ -26,28 +26,26 @@ export default function InfoPage() {
     return () => clearTimeout(t);
   }, []);
 
-  // ✅ IMPROVED NAME FETCH (handles both storage methods)
   useEffect(() => {
-    // 1. Try simple stored name first
     const simpleName = localStorage.getItem("guestName");
 
     if (simpleName) {
+      const firstName = simpleName.trim().split(" ")[0];
       const formatted =
-        simpleName.charAt(0).toUpperCase() +
-        simpleName.slice(1).toLowerCase();
+        firstName.charAt(0).toUpperCase() +
+        firstName.slice(1).toLowerCase();
 
       setGuestName(formatted);
       return;
     }
 
-    // 2. Fallback to guest-data object
     const guest = localStorage.getItem("guest-data");
     if (!guest) return;
 
     try {
       const parsed = JSON.parse(guest);
 
-      let rawName =
+      const rawName =
         parsed?.matchedName ||
         parsed?.primaryName ||
         parsed?.name ||
@@ -56,7 +54,7 @@ export default function InfoPage() {
 
       if (!rawName) return;
 
-      const firstName = rawName.split(" ")[0];
+      const firstName = rawName.trim().split(" ")[0];
 
       const formatted =
         firstName.charAt(0).toUpperCase() +
@@ -80,7 +78,7 @@ export default function InfoPage() {
 
   return (
     <>
-      <div className="absolute top-0 left-0 w-full z-20">
+      <div className="absolute top-0 left-0 z-20 w-full">
         <HeaderIdentity />
       </div>
 
@@ -120,11 +118,16 @@ export default function InfoPage() {
         </section>
 
         {/* NAV + CONTENT */}
-        <section className="px-6 py-16 md:py-20 min-h-[60vh] flex items-center">
-          <div className="mx-auto max-w-4xl text-center w-full">
-
-            {/* NAV LINKS */}
-            <div className="flex flex-wrap justify-center gap-x-8 gap-y-5 max-w-3xl mx-auto">
+        <section className="flex min-h-[60vh] items-center px-6 py-16 md:py-20">
+          <div
+            className={`mx-auto w-full max-w-4xl text-center transition-all duration-700 ${
+              showDetails
+                ? "translate-y-0 opacity-100"
+                : "translate-y-4 opacity-0"
+            }`}
+          >
+            {/* NAV */}
+            <div className="mx-auto flex max-w-3xl flex-wrap justify-center gap-x-8 gap-y-5">
               {navItems.map((item) => {
                 const isActive = pathname === item.path;
 
@@ -140,7 +143,6 @@ export default function InfoPage() {
                     prefetch={false}
                   >
                     {item.label}
-
                     <span
                       className={`absolute left-1/2 bottom-[-6px] h-px -translate-x-1/2 transition-all duration-300 ${
                         isActive
@@ -153,43 +155,54 @@ export default function InfoPage() {
               })}
             </div>
 
-            {/* TEXT BLOCK */}
-            <div className="mx-auto mt-12 max-w-xl text-center text-[#6e655e]">
+            {/* TEXT */}
+            <div className="mx-auto mt-16 max-w-2xl text-center text-[#6e655e]">
 
-              {/* ✨ PREMIUM GREETING */}
+              {/* NAME (HERO) */}
               {guestName && (
-                <p
-                  className={`${scriptFont.className} mb-4 text-[28px] text-[#6f655d]`}
+                <h2
+                  className={`
+                    ${scriptFont.className}
+                    mb-6
+                    px-4
+                    text-center
+                    text-[#6f655d]
+                    leading-[1.1]
+                    text-[clamp(34px,6vw,64px)]
+                    max-w-[90%]
+                    mx-auto
+                  `}
                 >
                   Hi {guestName}
-                </p>
+                </h2>
               )}
 
-              <p className="text-[15px] leading-[1.6]">
-                Pack your bags — we’re getting married in Phuket!
-              </p>
+              {/* ↓ toned down */}
+             <div className="mt-4 max-w-xl mx-auto text-[#7a7067]">
+  <p className="text-[15px] md:text-[17px] leading-[1.6]">
+    Pack your bags — we’re getting married in Phuket!
+  </p>
 
-              <p className="mt-2 text-[15px] leading-[1.6]">
-                We can’t wait to celebrate with you in paradise.
-              </p>
-
-              <p className="mt-4 text-[13px] text-[#8a817a]">
+  <p className="mt-2 text-[15px] md:text-[17px] leading-[1.6]">
+    We can’t wait to celebrate with you in paradise.
+  </p>
+</div>
+              <p className="mx-auto mt-8 max-w-md text-[12px] leading-7 text-[#9b9087]">
                 This will be our Thai wedding celebration, with a second
                 celebration to follow in the U.S.
               </p>
             </div>
 
             {/* RSVP */}
-            <div className="mt-10">
+            <div className="mt-12">
               <Link
                 href="/phuket/info/rsvp"
-                className="border border-[#cfc6be] px-8 py-3 text-[12px] uppercase tracking-[0.28em] text-[#4f4842] transition duration-300 hover:bg-[#4f4842] hover:text-[#f6f3ef]"
+                className="inline-flex border border-[#cfc6be] px-10 py-3 text-[12px] uppercase tracking-[0.3em] text-[#4f4842] transition duration-300 hover:bg-[#4f4842] hover:text-[#f6f3ef]"
                 prefetch={false}
               >
                 RSVP
               </Link>
             </div>
-
           </div>
         </section>
       </main>
