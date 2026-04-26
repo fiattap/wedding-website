@@ -7,7 +7,6 @@ import { Great_Vibes, Cormorant_Garamond } from "next/font/google";
 
 const INTRO_TEXT = "meet us in Phuket...";
 const NAMES = "FIAT & DEREK";
-const MAIN_HEADING = "Our adventures over the years";
 
 const PHOTOS = [
   "/photos/photo-1.jpg",
@@ -64,8 +63,8 @@ export default function PhuketPage() {
         setPrevPhoto((prev) => (prev + 1) % PHOTOS.length);
         setCurrentPhoto((prev) => (prev + 1) % PHOTOS.length);
         setIsFading(true);
-      }, 50);
-    }, 2000);
+      }, 80);
+    }, 2600);
 
     return () => clearInterval(interval);
   }, [showIntro]);
@@ -75,19 +74,16 @@ export default function PhuketPage() {
 
     const timeout = setTimeout(() => {
       setShowMoreDetails(true);
-    }, 8000);
+    }, 7000);
 
     return () => clearTimeout(timeout);
   }, [showIntro]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#f6f3ef] text-[#4f4842]">
-
+    <main className="relative min-h-screen overflow-hidden bg-[#f7f3ee] text-[#4f4842]">
       {/* INTRO */}
       {showIntro && (
         <div className="absolute inset-0 z-20">
-
-          {/* BACKGROUND — LOCKED (NO SHIFT EVER) */}
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={INTRO_BACKGROUND_PHOTO}
@@ -100,13 +96,12 @@ export default function PhuketPage() {
                 transformOrigin: "center center",
                 backfaceVisibility: "hidden",
                 WebkitBackfaceVisibility: "hidden",
-                transform: "translateZ(0) scale(1.05)", // 👈 KEY FIX
+                transform: "translateZ(0) scale(1.05)",
               }}
             />
-            <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute inset-0 bg-black/25" />
           </div>
 
-          {/* TEXT */}
           <div className="absolute inset-0 flex items-center justify-center px-4">
             <div
               className={`
@@ -134,59 +129,105 @@ export default function PhuketPage() {
       )}
 
       {/* MAIN */}
-      <div className={`relative transition-opacity duration-700 ${showIntro ? "opacity-0" : "opacity-100"}`}>
-        
-        <section className="flex min-h-screen flex-col items-center justify-start pt-10 md:pt-12 px-6 text-center">
-          
-          {/* 👇 slightly higher + cleaner */}
-          <p className="mb-6 -mt-2 text-[12px] uppercase tracking-[0.45em] text-[#8b8178]">
-            {NAMES}
-          </p>
+      <div
+        className={`relative transition-opacity duration-700 ${
+          showIntro ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        <section className="relative flex min-h-screen items-center justify-center px-6 py-10 text-center">
+          {/* background glow */}
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/45 blur-3xl" />
+          </div>
 
-          <h2 className={`${scriptFont.className} text-[34px] md:text-[56px] text-[#6f655d] leading-[1.2]`}>
-            {MAIN_HEADING}
-          </h2>
+          <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center">
+            {/* names */}
+            <p className="mb-6 text-[10px] uppercase tracking-[0.6em] text-[#a39a92]">
+              {NAMES}
+            </p>
 
-          {/* PHOTO */}
-          <div className="mt-12">
-            <div className="relative w-[220px] md:w-[260px] aspect-[4/5] mx-auto overflow-hidden rounded-[24px] shadow-lg">
+            {/* EDITORIAL HEADLINE */}
+            <div className="flex flex-col items-center leading-none">
+              <h2
+                className={`
+                  ${scriptFont.className}
+                  whitespace-nowrap
+                  text-[clamp(36px,5vw,72px)]
+                  text-[#6f655d]
+                `}
+              >
+                Our adventures
+              </h2>
 
-              <Image
-                src={PHOTOS[prevPhoto]}
-                alt=""
-                fill
-                sizes="(max-width: 768px) 220px, 260px"
-                className="object-cover absolute inset-0"
-              />
+              <span
+                className={`
+                  ${serifFont.className}
+                  mt-2
+                  text-[clamp(14px,1.6vw,18px)]
+                  tracking-[0.35em]
+                  uppercase
+                  text-[#9a8f85]
+                `}
+              >
+                over the years
+              </span>
+            </div>
 
-              <Image
-                src={PHOTOS[currentPhoto]}
-                alt=""
-                fill
-                priority
-                sizes="(max-width: 768px) 220px, 260px"
-                className={`object-cover absolute inset-0 transition-opacity duration-[1800ms] ${
-                  isFading ? "opacity-100" : "opacity-0"
-                }`}
-              />
+            {/* PHOTO */}
+            <div className="relative mt-12 flex w-full justify-center">
+              <div className="absolute top-1/2 h-[300px] w-[300px] -translate-y-1/2 rounded-full border border-white/70 bg-white/20 shadow-[0_30px_90px_rgba(79,72,66,0.12)] md:h-[390px] md:w-[390px]" />
 
+              <div className="relative rounded-[34px] bg-white/70 p-3 shadow-[0_28px_80px_rgba(79,72,66,0.18)] backdrop-blur-sm">
+                <div className="relative aspect-[4/5] w-[250px] overflow-hidden rounded-[28px] md:w-[310px]">
+                  <Image
+                    src={PHOTOS[prevPhoto]}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 250px, 310px"
+                    className="absolute inset-0 object-cover"
+                  />
+
+                  <Image
+                    src={PHOTOS[currentPhoto]}
+                    alt=""
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 250px, 310px"
+                    className={`absolute inset-0 object-cover transition-opacity duration-[1800ms] ${
+                      isFading ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* subtext */}
+            <p
+              className={`${serifFont.className} mt-7 text-[14px] italic tracking-[0.08em] text-[#9b9087]`}
+            >
+              a collection of places we have loved
+            </p>
+
+            {/* CTA */}
+            <div
+              className={`mt-8 transition-all duration-700 ${
+                showMoreDetails
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-4 opacity-0"
+              }`}
+            >
+              <Link href="/phuket/info">
+                <span className="group flex flex-col items-center text-[11px] uppercase tracking-[0.32em] text-[#8b8178]">
+                  <span className="border-b border-[#b8aea4]/60 pb-2">
+                    More Details
+                  </span>
+                  <span className="mt-3 text-[13px] opacity-60 animate-bounce">
+                    ↓
+                  </span>
+                </span>
+              </Link>
             </div>
           </div>
-
-          <p className={`${serifFont.className} mt-8 text-[14px] tracking-[0.12em] text-[#a0968d]`}>
-            a collection of places we have loved
-          </p>
-
-          {/* CTA */}
-          <div className={`mt-10 transition-all duration-700 ${showMoreDetails ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-            <Link href="/phuket/info">
-              <span className="flex flex-col items-center text-[11px] uppercase tracking-[0.3em] text-[#8b8178]">
-                <span>More Details</span>
-                <span className="mt-2 text-[12px] opacity-70 animate-bounce">↓</span>
-              </span>
-            </Link>
-          </div>
-
         </section>
       </div>
 
