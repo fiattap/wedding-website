@@ -111,12 +111,27 @@ export default function Home() {
             />
           </div>
 
-          {/* BUTTON */}
+          {/* BUTTON — refined / understated */}
           <div className="mt-8">
             <button
               onClick={handleLogin}
               disabled={loading}
-              className="w-[150px] bg-[#ede7e1] text-[#7a7068] py-3 text-[11px] uppercase tracking-[0.4em] transition-all duration-500 hover:bg-[#7a7068] hover:text-white hover:scale-[1.04] active:scale-[0.98] disabled:opacity-50"
+              className="
+                w-[150px]
+                border border-[#e2dbd4]
+                text-[#8a8077]
+                py-3
+                text-[11px]
+                uppercase
+                tracking-[0.4em]
+                bg-transparent
+                transition-all duration-500
+                hover:border-[#cfc7c0]
+                hover:text-[#6f655d]
+                hover:bg-white/30
+                active:scale-[0.98]
+                disabled:opacity-50
+              "
             >
               {loading ? "Checking..." : "Enter"}
             </button>
