@@ -1,4 +1,6 @@
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 import { NextResponse } from "next/server";
 import { getGuestRows } from "@/lib/googleSheets";
@@ -19,11 +21,14 @@ function splitNames(value: string) {
     .filter(Boolean);
 }
 
-let cachedRows: string[][] | null = null;
+function getFirstName(value: string) {
+  return String(value || "").trim().split(/\s+/)[0] || "";
+}
 
 export async function POST(req: Request) {
   try {
     let body: any = {};
+
     try {
       body = await req.json();
     } catch {
@@ -43,20 +48,16 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!cachedRows) {
-      const rows = await getGuestRows();
+    // ✅ Always fetch latest Google Sheet data
+    const rows = await getGuestRows();
 
-      if (!rows || rows.length < 2) {
-        return NextResponse.json(
-          { ok: false, error: "Guest list is empty." },
-          { status: 500 }
-        );
-      }
-
-      cachedRows = rows;
+    if (!rows || rows.length < 2) {
+      return NextResponse.json(
+        { ok: false, error: "Guest list is empty." },
+        { status: 500 }
+      );
     }
 
-    const rows = cachedRows!;
     const headers = rows[0].map((h) => String(h || "").trim());
     const dataRows = rows.slice(1);
 
@@ -79,14 +80,18 @@ export async function POST(req: Request) {
 
     let matchedRow: string[] | null = null;
     let matchedName = "";
+    let displayFirstName = "";
     let matchedRowIndex = -1;
 
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i] || [];
 
-      const primary = normalize(row[primaryIdx]);
-      const secondary = normalize(row[secondaryIdx]);
-      const partyRaw = String(row[partyIdx] || "");
+      const primaryRaw = String(row[primaryIdx] || "").trim();
+      const secondaryRaw = String(row[secondaryIdx] || "").trim();
+      const partyRaw = String(row[partyIdx] || "").trim();
+
+      const primary = normalize(primaryRaw);
+      const secondary = normalize(secondaryRaw);
       const partyNames = splitNames(partyRaw);
 
       if (
@@ -98,11 +103,14 @@ export async function POST(req: Request) {
         matchedRowIndex = i + 2;
 
         if (primary === fullName) {
-          matchedName = row[primaryIdx];
+          matchedName = primaryRaw;
+          displayFirstName = getFirstName(primaryRaw);
         } else if (secondary === fullName) {
-          matchedName = row[secondaryIdx];
+          matchedName = secondaryRaw;
+          displayFirstName = getFirstName(secondaryRaw);
         } else {
-          matchedName = partyRaw;
+          matchedName = primaryRaw || partyRaw;
+          displayFirstName = getFirstName(primaryRaw || partyRaw);
         }
 
         break;
@@ -120,6 +128,7 @@ export async function POST(req: Request) {
       ok: true,
       guest: {
         matchedName: String(matchedName || "").trim(),
+        firstName: String(displayFirstName || "").trim(),
         partyName: String(matchedRow[partyIdx] || "").trim(),
         primaryName: String(matchedRow[primaryIdx] || "").trim(),
         secondaryName: String(matchedRow[secondaryIdx] || "").trim(),
@@ -148,7 +157,6 @@ export async function POST(req: Request) {
     });
 
     return response;
-
   } catch (error: any) {
     console.error("❌ API ERROR FULL:", error);
 

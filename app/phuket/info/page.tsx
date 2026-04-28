@@ -4,16 +4,11 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import HeaderIdentity from "../../components/HeaderIdentity";
-import { Great_Vibes, Cormorant_Garamond } from "next/font/google";
+import { Great_Vibes } from "next/font/google";
 
 const scriptFont = Great_Vibes({
   subsets: ["latin"],
   weight: "400",
-});
-
-const serifFont = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["300", "400", "500"],
 });
 
 export default function InfoPage() {
@@ -27,42 +22,34 @@ export default function InfoPage() {
   }, []);
 
   useEffect(() => {
-    const simpleName = localStorage.getItem("guestName");
+    const guest = localStorage.getItem("guest-data");
 
-    if (simpleName) {
-      const firstName = simpleName.trim().split(" ")[0];
-      const formatted =
-        firstName.charAt(0).toUpperCase() +
-        firstName.slice(1).toLowerCase();
+    if (guest) {
+      try {
+        const parsed = JSON.parse(guest);
 
-      setGuestName(formatted);
-      return;
+        // ✅ handle BOTH shapes:
+        // 1. { firstName: "Carol" }
+        // 2. { guest: { firstName: "Carol" } }
+        const firstName =
+          parsed?.firstName ||
+          parsed?.guest?.firstName ||
+          "";
+
+        if (firstName?.trim()) {
+          setGuestName(firstName.trim());
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to parse guest-data", err);
+      }
     }
 
-    const guest = localStorage.getItem("guest-data");
-    if (!guest) return;
+    // fallback
+    const simpleName = localStorage.getItem("guestName");
 
-    try {
-      const parsed = JSON.parse(guest);
-
-      const rawName =
-        parsed?.matchedName ||
-        parsed?.primaryName ||
-        parsed?.name ||
-        parsed?.fullName ||
-        "";
-
-      if (!rawName) return;
-
-      const firstName = rawName.trim().split(" ")[0];
-
-      const formatted =
-        firstName.charAt(0).toUpperCase() +
-        firstName.slice(1).toLowerCase();
-
-      setGuestName(formatted);
-    } catch (err) {
-      console.error("Failed to parse guest-data", err);
+    if (simpleName?.trim()) {
+      setGuestName(simpleName.trim());
     }
   }, []);
 
@@ -135,58 +122,49 @@ export default function InfoPage() {
                   <Link
                     key={item.label}
                     href={item.path}
-                    className={`group relative text-[14px] uppercase tracking-[0.32em] transition duration-300 ${
+                    className={`group relative text-[14px] uppercase tracking-[0.32em] ${
                       isActive
                         ? "text-[#4f4842]"
                         : "text-[#8e8378] hover:text-[#4f4842]"
                     }`}
-                    prefetch={false}
                   >
                     {item.label}
-                    <span
-                      className={`absolute left-1/2 bottom-[-6px] h-px -translate-x-1/2 transition-all duration-300 ${
-                        isActive
-                          ? "w-10 bg-[#4f4842]"
-                          : "w-0 bg-[#4f4842] group-hover:w-10"
-                      }`}
-                    />
                   </Link>
                 );
               })}
             </div>
 
             {/* TEXT */}
-            <div className="mx-auto mt-16 max-w-2xl text-center text-[#6e655e]">
-
-              {/* NAME (HERO) */}
+            <div className="mx-auto mt-12 max-w-2xl text-center text-[#6e655e]">
               {guestName && (
-                <h2
-                  className={`
-                    ${scriptFont.className}
-                    mb-6
-                    px-4
-                    text-center
-                    text-[#6f655d]
-                    leading-[1.1]
-                    text-[clamp(34px,6vw,64px)]
-                    max-w-[90%]
-                    mx-auto
-                  `}
-                >
-                  Hi {guestName}
-                </h2>
+                <div className="flex justify-center overflow-visible">
+                  <h2
+                    className={`
+                      ${scriptFont.className}
+                      inline-block
+                      whitespace-nowrap
+                      text-center
+                      text-[#6f655d]
+                      leading-[1.4]
+                      tracking-[0.02em]
+                      text-[clamp(32px,5vw,56px)]
+                    `}
+                  >
+                    Hi {guestName}
+                  </h2>
+                </div>
               )}
 
-              {/* ↓ toned down */}
-             <div className="mt-4 max-w-xl mx-auto text-[#7a7067]">
-  <p className="text-[15px] md:text-[17px] leading-[1.6]">
-    Pack your bags — we’re getting married in Phuket!
-  </p>
+              <div className="mx-auto mt-4 max-w-xl text-[#7a7067]">
+                <p className="text-[15px] md:text-[17px] leading-[1.6]">
+                  Pack your bags — we’re getting married in Phuket!
+                </p>
 
-  <p className="mt-2 text-[15px] md:text-[17px] leading-[1.6]">
-    We can’t wait to celebrate with you in paradise.
-  </p>
-</div>
+                <p className="mt-2 text-[15px] md:text-[17px] leading-[1.6]">
+                  We can’t wait to celebrate with you in paradise.
+                </p>
+              </div>
+
               <p className="mx-auto mt-8 max-w-md text-[12px] leading-7 text-[#9b9087]">
                 This will be our Thai wedding celebration, with a second
                 celebration to follow in the U.S.
@@ -198,7 +176,6 @@ export default function InfoPage() {
               <Link
                 href="/phuket/info/rsvp"
                 className="inline-flex border border-[#cfc6be] px-10 py-3 text-[12px] uppercase tracking-[0.3em] text-[#4f4842] transition duration-300 hover:bg-[#4f4842] hover:text-[#f6f3ef]"
-                prefetch={false}
               >
                 RSVP
               </Link>

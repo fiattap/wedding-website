@@ -28,20 +28,9 @@ export default function Home() {
 
   // ✅ helper to extract FIRST NAME cleanly
   const getFirstName = (raw: string) => {
-    if (!raw) return "";
-
-    // if name has spaces → take first word
-    if (raw.includes(" ")) {
-      return raw.split(" ")[0];
-    }
-
-    // if it's like "cindyarthurs" → try to split camel-style (fallback: first 5–6 chars)
-    const match = raw.match(/^[a-z]+/i);
-    const guess = match ? match[0] : raw;
-
-    // optional: trim overly long strings (prevents "cindyarthurs")
-    return guess.length > 8 ? guess.slice(0, 5) : guess;
-  };
+  if (!raw) return "";
+  return raw.trim().split(/\s+/)[0];
+};
 
   const formatName = (name: string) =>
     name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
