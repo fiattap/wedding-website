@@ -44,7 +44,7 @@ export default function PhuketPage() {
   const [showMoreDetails, setShowMoreDetails] = useState(false);
 
   useEffect(() => {
-    const textTimer = setTimeout(() => setShowIntroText(true), 2600);
+    const textTimer = setTimeout(() => setShowIntroText(true), 2000);
     const hideTimer = setTimeout(() => setShowIntro(false), 6500);
 
     return () => {
@@ -136,9 +136,9 @@ export default function PhuketPage() {
       >
         <section className="relative flex min-h-screen items-center justify-center px-6 py-10 text-center">
           {/* background glow */}
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/45 blur-3xl" />
-          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+  <div className="h-[420px] w-[420px] rounded-full bg-white/40 blur-3xl" />
+</div>
 
           <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center">
             {/* names */}
@@ -175,31 +175,29 @@ export default function PhuketPage() {
 
             {/* PHOTO */}
             <div className="relative mt-12 flex w-full justify-center">
-              <div className="absolute top-1/2 h-[300px] w-[300px] -translate-y-1/2 rounded-full border border-white/70 bg-white/20 shadow-[0_30px_90px_rgba(79,72,66,0.12)] md:h-[390px] md:w-[390px]" />
+  <div className="relative rounded-[34px] bg-white/70 p-3 shadow-[0_28px_80px_rgba(79,72,66,0.18)] backdrop-blur-sm">
+    <div className="relative aspect-[4/5] w-[250px] overflow-hidden rounded-[28px] md:w-[310px]">
+      <Image
+        src={PHOTOS[prevPhoto]}
+        alt=""
+        fill
+        sizes="(max-width: 768px) 250px, 310px"
+        className="absolute inset-0 object-cover"
+      />
 
-              <div className="relative rounded-[34px] bg-white/70 p-3 shadow-[0_28px_80px_rgba(79,72,66,0.18)] backdrop-blur-sm">
-                <div className="relative aspect-[4/5] w-[250px] overflow-hidden rounded-[28px] md:w-[310px]">
-                  <Image
-                    src={PHOTOS[prevPhoto]}
-                    alt=""
-                    fill
-                    sizes="(max-width: 768px) 250px, 310px"
-                    className="absolute inset-0 object-cover"
-                  />
-
-                  <Image
-                    src={PHOTOS[currentPhoto]}
-                    alt=""
-                    fill
-                    priority
-                    sizes="(max-width: 768px) 250px, 310px"
-                    className={`absolute inset-0 object-cover transition-opacity duration-[1800ms] ${
-                      isFading ? "opacity-100" : "opacity-0"
-                    }`}
-                  />
-                </div>
-              </div>
-            </div>
+      <Image
+        src={PHOTOS[currentPhoto]}
+        alt=""
+        fill
+        priority
+        sizes="(max-width: 768px) 250px, 310px"
+        className={`absolute inset-0 object-cover transition-opacity duration-[1200ms] ${
+          isFading ? "opacity-100" : "opacity-0"
+        }`}
+      />
+    </div>
+  </div>
+</div>
 
             {/* subtext */}
             <p
